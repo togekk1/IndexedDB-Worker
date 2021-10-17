@@ -12,7 +12,7 @@ export async function db_get(
       const get_db_data = (event: MessageEvent) => {
         db_worker.removeEventListener("message", get_db_data);
         try {
-          resolve(JSON.parse(event.data));
+          resolve(event.data ? JSON.parse(event.data) : undefined);
         } catch (err) {
           reject(err);
         }

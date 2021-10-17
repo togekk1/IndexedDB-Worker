@@ -52,7 +52,9 @@ onmessage = async (event: MessageEvent<string>) => {
     };
 
     request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
-      (event.target as any).result.createObjectStore(store_name);
+      ["Chapter 1", "Timer"].forEach((store_name: string) => {
+        (event.target as any).result.createObjectStore(store_name);
+      });
     };
   } catch (err) {
     console.error(err);
