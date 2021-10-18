@@ -1,17 +1,28 @@
 onmessage = async (event: MessageEvent<string>) => {
   try {
-    const [action, db_name, store_name, key, value]: [
-      0 | 1 | 2 | 3,
-      string,
-      string,
-      string | number,
-      any
-    ] = JSON.parse(event.data);
-    const request: IDBOpenDBRequest = indexedDB.open(db_name);
+    const {
+      db_version,
+      action,
+      database_name,
+      objectstore_name,
+      objectstores,
+      key,
+      value,
+    }: {
+      db_version: number;
+      action: 0 | 1 | 2 | 3;
+      database_name: string;
+      objectstore_name: string;
+      objectstores: string[];
+      key: string;
+      value?: any;
+    } = JSON.parse(event.data);
+
+    const request: IDBOpenDBRequest = indexedDB.open(database_name, db_version);
     request.onsuccess = (event: Event) => {
       const db = (event.target as any).result as IDBDatabase;
-      const _transaction = db.transaction([store_name], "readwrite");
-      const objectStore = _transaction.objectStore(store_name);
+      const _transaction = db.transaction([objectstore_name], "readwrite");
+      const objectStore = _transaction.objectStore(objectstore_name);
 
       const request = [
         () => objectStore.get(key),
@@ -52,8 +63,10 @@ onmessage = async (event: MessageEvent<string>) => {
     };
 
     request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
-      ["Chapter 1", "Timer"].forEach((store_name: string) => {
-        (event.target as any).result.createObjectStore(store_name);
+      objectstores.forEach((objectstore_name: string) => {
+        const db = (event.target as any).result as IDBDatabase;
+        !db.objectStoreNames.contains(objectstore_name) &&
+          db.createObjectStore(objectstore_name);
       });
     };
   } catch (err) {
