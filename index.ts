@@ -102,3 +102,21 @@ export async function db_get_all(
     }
   );
 }
+
+export function db_delete(
+  database_name: string,
+  objectstore_name: string,
+  key: string | number
+) {
+  const db_worker = new Worker("./assets/web-worker/indexeddb/worker.js");
+  db_worker.postMessage(
+    JSON.stringify({
+      db_version: config.db_version,
+      action: 4,
+      database_name,
+      objectstore_name,
+      key,
+      objectstores: config.objectstores,
+    })
+  );
+}

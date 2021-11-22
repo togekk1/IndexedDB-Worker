@@ -10,7 +10,7 @@ onmessage = async (event: MessageEvent<string>) => {
       value,
     }: {
       db_version: number;
-      action: 0 | 1 | 2 | 3;
+      action: 0 | 1 | 2 | 3 | 4;
       database_name: string;
       objectstore_name: string;
       objectstores: string[];
@@ -29,7 +29,9 @@ onmessage = async (event: MessageEvent<string>) => {
         () => objectStore.put(value, key),
         () => objectStore.count(),
         () => objectStore.getAll(),
+        () => objectStore.delete(key),
       ][action]();
+
       // const action_msg = ["Reading", "Writing", "Counting"][action];
 
       request.onsuccess = function () {
