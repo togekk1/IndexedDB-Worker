@@ -1,50 +1,28 @@
 onmessage = async (event: MessageEvent<string>) => {
   try {
+    const data = JSON.parse(event.data);
+
     const {
       db_version,
-      action,
       database_name,
-      objectstore_name,
       objectstores,
-      key,
-      value,
     }: {
       db_version: number;
-      action: 0 | 1 | 2 | 3 | 4;
       database_name: string;
-      objectstore_name: string;
       objectstores: string[];
-      key: string;
-      value?: any;
-    } = JSON.parse(event.data);
+    } = Array.isArray(data) ? data[0] : data;
 
     const request: IDBOpenDBRequest = indexedDB.open(database_name, db_version);
+
     request.onsuccess = (event: Event) => {
       const db = (event.target as any).result as IDBDatabase;
-      const _transaction = db.transaction([objectstore_name], "readwrite");
-      const objectStore = _transaction.objectStore(objectstore_name);
+      const _transaction = db.transaction(objectstores, "readwrite");
 
-      const request = [
-        () => objectStore.get(key),
-        () => objectStore.put(value, key),
-        () => objectStore.count(),
-        () => objectStore.getAll(),
-        () => objectStore.delete(key),
-      ][action]();
-
-      // const action_msg = ["Reading", "Writing", "Counting"][action];
-
-      request.onsuccess = function () {
-        // console.log(`${action_msg} DB successfully`);
-        const result = (request as any).result;
-        [0, 2, 3].includes(action) &&
-          postMessage(action === 2 ? result : JSON.stringify(result));
-      };
-
-      request.onerror = function (error: Event) {
-        // console.log(`${action_msg} DB failed`);
-        console.error(error);
-      };
+      Array.isArray(data)
+        ? data.forEach((data_each: any) => {
+            fetch_db(data_each);
+          })
+        : fetch_db(data);
 
       _transaction.oncomplete = function () {
         // console.log("All transaction finished");
@@ -57,9 +35,52 @@ onmessage = async (event: MessageEvent<string>) => {
         db.close();
         close();
       };
+
+      function fetch_db(data: any) {
+        const {
+          action,
+          objectstore_name,
+          key,
+          value,
+        }: {
+          action: 0 | 1 | 2 | 3 | 4;
+          objectstore_name: string;
+          key: string;
+          value?: any;
+        } = data;
+
+        const objectStore = _transaction.objectStore(objectstore_name);
+
+        const request = [
+          () => objectStore.get(key),
+          () => objectStore.put(value, key),
+          () => objectStore.count(),
+          () => objectStore.getAll(),
+          () => objectStore.delete(key),
+        ][action]();
+
+        request.onsuccess = function () {
+          // const action_msg = [
+          //   "Reading",
+          //   "Writing",
+          //   "Counting",
+          //   "Reading all in",
+          //   "Deleting",
+          // ][action];
+          // console.log(`${action_msg} ${objectstore_name} successfully`);
+          const result = (request as any).result;
+          [0, 2, 3].includes(action) &&
+            postMessage(action === 2 ? result : JSON.stringify(result));
+        };
+
+        request.onerror = (error: Event) => {
+          console.error(error);
+        };
+      }
     };
 
-    request.onerror = (error: Event) => {
+    request.onerror = function (error: Event) {
+      // console.log(`${action_msg} DB failed`);
       console.error(error);
       close();
     };
@@ -73,5 +94,6 @@ onmessage = async (event: MessageEvent<string>) => {
     };
   } catch (err) {
     console.error(err);
+    close();
   }
 };

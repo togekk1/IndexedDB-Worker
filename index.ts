@@ -1,5 +1,17 @@
 import { config } from "../../../../config";
 
+function debounce(func: Function, timeout: number = 500) {
+  let timer: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      func.apply(undefined, args);
+    }, timeout);
+  };
+}
+
+let db_operations: any[] = [];
+
 export async function db_get(
   database_name: string,
   objectstore_name: string,
@@ -37,18 +49,17 @@ export function db_set(
   key: string | number,
   value: any
 ) {
-  const db_worker = new Worker("./assets/web-worker/indexeddb/worker.js");
-  db_worker.postMessage(
-    JSON.stringify({
-      db_version: config.db_version,
-      action: 1,
-      database_name,
-      objectstore_name,
-      key,
-      value,
-      objectstores: config.objectstores,
-    })
-  );
+  db_operations.push({
+    db_version: config.db_version,
+    action: 1,
+    database_name,
+    objectstore_name,
+    key,
+    value,
+    objectstores: config.objectstores,
+  });
+
+  debounce(db_run)();
 }
 
 export async function db_count(
@@ -119,4 +130,12 @@ export function db_delete(
       objectstores: config.objectstores,
     })
   );
+}
+
+export async function db_run(): Promise<any> {
+  if (db_operations.length) {
+    const db_worker = new Worker("./assets/web-worker/indexeddb/worker.js");
+    db_worker.postMessage(JSON.stringify(db_operations));
+    db_operations = [];
+  }
 }
