@@ -1,7 +1,15 @@
 {
-  "name": "indexeddb",
-  "packageManager": "yarn@3.0.1",
+  "name": "indexeddb-worker",
+  "packageManager": "yarn@3.6.0",
+  "version": "0.0.1",
   "scripts": {
-    "build": "yarn dlx uglify-js worker.js -c -m -o worker.js"
+    "build": "ts-node build.ts",
+    "preinstall": "npm run build"
+  },
+  "dependencies": {
+    "@types/node": "^20.2.5",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.3",
+    "uglify-js": "^3.17.4"
   }
 }
