@@ -1,7 +1,7 @@
 {
   "name": "indexeddb-worker",
   "packageManager": "yarn@3.6.0",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "scripts": {
     "build": "ts-node build.ts",
     "preinstall": "npm run build"
