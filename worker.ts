@@ -57,7 +57,7 @@ onmessage = async (event: MessageEvent<string>) => {
           () => objectStore.count(),
           () => objectStore.getAll(),
           () => objectStore.delete(key),
-        ][action]();
+        ][action]!();
 
         request.onsuccess = function () {
           // const action_msg = [
