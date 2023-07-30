@@ -16,19 +16,20 @@ export async function db_get({
   database_name,
   objectstore_name,
   key,
-  worker,
+  worker_path,
   db_version,
   objectstores,
 }: {
   database_name: string;
   objectstore_name: string;
   key: string | number;
-  worker: Worker;
+  worker_path: string;
   db_version: number;
   objectstores: string;
 }): Promise<any> {
   return new Promise<any>(
     (resolve: (value: any) => void, reject: (reason?: any) => void): void => {
+      const worker = new Worker(worker_path);
       worker.postMessage(
         JSON.stringify({
           db_version: db_version,
@@ -83,51 +84,51 @@ export function db_set({
 export async function db_count({
   database_name,
   objectstore_name,
-  worker,
+  worker_path,
   db_version,
   objectstores,
 }: {
   database_name: string;
   objectstore_name: string;
-  worker: Worker;
+  worker_path: string;
   db_version: number;
   objectstores: string;
 }): Promise<number> {
   return new Promise<number>((resolve: (value: number) => void): void => {
-    const db_worker = new Worker("./assets/web-worker/indexeddb/worker.js");
-    db_worker.postMessage(
+    const worker = new Worker(worker_path);
+    worker.postMessage(
       JSON.stringify({
         db_version: db_version,
         action: 2,
         database_name,
         objectstore_name,
-        worker,
         objectstores,
       })
     );
     const get_db_data = (event: MessageEvent) => {
-      db_worker.removeEventListener("message", get_db_data);
+      worker.removeEventListener("message", get_db_data);
       resolve(event.data);
     };
-    db_worker.addEventListener("message", get_db_data);
+    worker.addEventListener("message", get_db_data);
   });
 }
 
 export async function db_get_all({
   database_name,
   objectstore_name,
-  worker,
+  worker_path,
   db_version,
   objectstores,
 }: {
   database_name: string;
   objectstore_name: string;
-  worker: Worker;
+  worker_path: string;
   db_version: number;
   objectstores: string;
 }): Promise<any[]> {
   return new Promise<any[]>(
     (resolve: (value: any) => void, reject: (reason?: any) => void): void => {
+      const worker = new Worker(worker_path);
       worker.postMessage(
         JSON.stringify({
           db_version: db_version,
@@ -154,17 +155,18 @@ export function db_delete({
   database_name,
   objectstore_name,
   key,
-  worker,
+  worker_path,
   db_version,
   objectstores,
 }: {
   database_name: string;
   objectstore_name: string;
   key: string | number;
-  worker: Worker;
+  worker_path: string;
   db_version: number;
   objectstores: string;
 }) {
+  const worker = new Worker(worker_path);
   worker.postMessage(
     JSON.stringify({
       db_version: db_version,
@@ -178,8 +180,9 @@ export function db_delete({
   );
 }
 
-export async function db_run(worker: Worker): Promise<any> {
+export async function db_run(worker_path: string): Promise<any> {
   if (db_operations.length) {
+    const worker = new Worker(worker_path);
     worker.postMessage(JSON.stringify(db_operations));
     db_operations = [];
   }
